@@ -78,6 +78,149 @@ int main() {
 }
 ```
 
+### Segment Tree
+```C++
+class SegTree {
+    struct Node {
+        int b, e;
+        long long s;
+        Node *l, *r;
+        Node(int b, int e) : b(b), e(e), s(0), l(nullptr), r(nullptr) {}
+    };
+
+    Node *root;
+
+    void update_(Node *now, int i, int value) {
+        if (now->b == now->e) {
+            now->s = value;
+            return;
+        }
+        int mid = (now->b + now->e) / 2;
+        if (i <= mid) {
+            if (!now->l) now->l = new Node(now->b, mid);
+            update_(now->l, i, value);
+        } else {
+            if (!now->r) now->r = new Node(mid + 1, now->e);
+            update_(now->r, i, value);
+        }
+        now->s = (now->l ? now->l->s : 0) + (now->r ? now->r->s : 0);
+    }
+
+    long long get_sum_(Node *now, int b, int e) {
+        if (!now || e < now->b || now->e < b)
+            return 0;  // out of range
+        else if (b <= now->b && now->e <= e)
+            return now->s;  // included
+        else
+            return get_sum_(now->l, b, e) + get_sum_(now->r, b, e);
+    }
+
+    void delete_nodes(Node *now) {
+        if (!now) return;
+        delete_nodes(now->l);
+        delete_nodes(now->r);
+        delete now;
+    }
+
+public:
+    SegTree(int N) { root = new Node(1, N); }
+    void update(int i, int value) { update_(root, i, value); }
+    long long get_sum(int b, int e) { return get_sum_(root, b, e); }
+    ~SegTree() { delete_nodes(root); }
+};
+```
+
+### Persistent Segment Tree
+```C++
+class PST {
+    struct Node {
+        int left, right;  // [left, right]
+        int sum;
+        Node *lchild, *rchild;
+
+        Node(int left, int right) : left(left), right(right), sum(0), lchild(nullptr), rchild(nullptr) {}
+    };
+
+    Node *root[MAXN + 1];  // root[x]: tree of 0 ~ x-1
+    vector<Node *> node_ptrs;
+
+    Node *update_(Node *this_node, int y, bool is_new) {
+        int left = this_node->left;
+        int right = this_node->right;
+        int mid = (left + right) / 2;
+
+        Node *new_node;
+        if (!is_new) {
+            new_node = new Node(left, right);
+            node_ptrs.push_back(new_node);
+            new_node->lchild = this_node->lchild;
+            new_node->rchild = this_node->rchild;
+        } else
+            new_node = this_node;
+
+        // Leaf node
+        if (left == right) {
+            new_node->sum = this_node->sum + 1;
+            return new_node;
+        }
+
+        if (y <= mid) {  // Left
+            if (!new_node->lchild) {
+                new_node->lchild = new Node(left, mid);
+                node_ptrs.push_back(new_node->lchild);
+                update_(new_node->lchild, y, true);
+            } else
+                new_node->lchild = update_(new_node->lchild, y, false);
+        } else {  // Right
+            if (!new_node->rchild) {
+                new_node->rchild = new Node(mid + 1, right);
+                node_ptrs.push_back(new_node->rchild);
+                update_(new_node->rchild, y, true);
+            } else
+                new_node->rchild = update_(new_node->rchild, y, false);
+        }
+
+        int sum = 0;
+        if (new_node->lchild) sum += new_node->lchild->sum;
+        if (new_node->rchild) sum += new_node->rchild->sum;
+        new_node->sum = sum;
+        return new_node;
+    }
+
+    int get_sum_(Node *here, int b, int t) {
+        if (!here || t < here->left || here->right < b)
+            return 0;
+        else if (b <= here->left && here->right <= t)
+            return here->sum;
+        else
+            return get_sum_(here->lchild, b, t) + get_sum_(here->rchild, b, t);
+    }
+
+public:
+    PST() {
+        root[0] = new Node(0, MAXY);
+        node_ptrs.push_back(root[0]);
+        for (int i = 1; i <= MAXN; i++) root[i] = nullptr;
+    }
+
+    void update(int xi, int y) {
+        if (!root[xi + 1])
+            root[xi + 1] = update_(root[xi], y, false);
+        else
+            update_(root[xi + 1], y, true);
+    }
+
+    // Sum of 0 ~ x-1
+    int get_sum(int xi, int b, int t) {
+        return get_sum_(root[xi + 1], b, t);
+    }
+
+    ~PST() {
+        for (Node *p : node_ptrs) delete p;
+    }
+};
+```
+
 ## Graph
 
 ### 2-SAT
@@ -193,58 +336,6 @@ int main()
 	for(int i = 1; i <= 2 * n; i+=2)
 		cout << value[group[i]] << ' ';
 }
-```
-
-### Segment Tree
-```C++
-class SegTree {
-    struct Node {
-        int b, e;
-        long long s;
-        Node *l, *r;
-        Node(int b, int e) : b(b), e(e), s(0), l(nullptr), r(nullptr) {}
-    };
-
-    Node *root;
-
-    void update_(Node *now, int i, int value) {
-        if (now->b == now->e) {
-            now->s = value;
-            return;
-        }
-        int mid = (now->b + now->e) / 2;
-        if (i <= mid) {
-            if (!now->l) now->l = new Node(now->b, mid);
-            update_(now->l, i, value);
-        } else {
-            if (!now->r) now->r = new Node(mid + 1, now->e);
-            update_(now->r, i, value);
-        }
-        now->s = (now->l ? now->l->s : 0) + (now->r ? now->r->s : 0);
-    }
-
-    long long get_sum_(Node *now, int b, int e) {
-        if (!now || e < now->b || now->e < b)
-            return 0;  // out of range
-        else if (b <= now->b && now->e <= e)
-            return now->s;  // included
-        else
-            return get_sum_(now->l, b, e) + get_sum_(now->r, b, e);
-    }
-
-    void delete_nodes(Node *now) {
-        if (!now) return;
-        delete_nodes(now->l);
-        delete_nodes(now->r);
-        delete now;
-    }
-
-public:
-    SegTree(int N) { root = new Node(1, N); }
-    void update(int i, int value) { update_(root, i, value); }
-    long long get_sum(int b, int e) { return get_sum_(root, b, e); }
-    ~SegTree() { delete_nodes(root); }
-};
 ```
 
 ## String
