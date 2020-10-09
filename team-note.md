@@ -450,6 +450,29 @@ int hopcroft_karp() {
     }
     return match;
 }
+
+// vertex cover
+bool check_a[MAX], check_b[MAX];
+vector<int> l, r;
+
+void dfs_b(int x){
+    if(check_a[x]) return;
+    check_a[x] = true;
+    for(auto i : adj[x]){
+        check_b[i] = 1;
+        dfs_b(B[i]);
+    }
+}
+
+void getcover() {
+    memset(check_a, 0, sizeof(check_a));
+    memset(check_b, 0, sizeof(check_b));
+    for (int i = 0; i < N; i++) if (A[i] == -1) dfs_b(i);
+    for (int i = 0; i < N; i++) if (!check_a[i]) l.push_back(i);
+    for (int i = 0; i < M; i++) if (check_b[i]) r.push_back(i);
+}
+
+
 ```
 
 ### MCMF
@@ -1045,6 +1068,22 @@ int main() {
     }
     cout << result << '\n';
 }
+```
+### fermat's little theorem
+```C++
+long long pow(long long n, long long r, int MOD) {
+    long long ret = 1;
+    for (; r; r >>= 1) {
+        if (r & 1) ret = ret * n % MOD;
+        n = n * n % MOD;
+    }
+    return ret;
+}
+/* A * B^(p−2)  (mod p)
+long long ans = fact[a];
+ans = ans * pow(fact[b], MOD - 2, MOD) % MOD;
+ans = ans * pow(fact[a - b], MOD - 2, MOD) % MOD;
+*/
 ```
 
 ## Dynamic Programming
