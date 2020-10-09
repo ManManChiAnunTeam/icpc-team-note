@@ -568,6 +568,32 @@ int main()
 
 ## String
 
+### Trie
+```C++
+struct Trie {
+    Trie* go[26];
+    Trie* fail;
+    bool out;
+
+    Trie() : out(false) {
+        fill(go, go + 26, nullptr);
+    }
+    ~Trie() {
+        for (int i = 0; i < 26; i++)
+            if (go[i]) delete go[i];
+    }
+    void insert(const char* key) {
+        if (*key == '\0') {
+            out = true;
+            return;
+        }
+        int next = *key - 'A';
+        if (!go[next]) go[next] = new Trie;
+        go[next]->insert(key + 1);
+    }
+};
+```
+
 ## Geometry
 
 ## Math
