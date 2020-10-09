@@ -4,6 +4,7 @@
 
 ### LCA
 ```C++
+// O(nlogn)
 #include <iostream>
 #include <vector>
 
