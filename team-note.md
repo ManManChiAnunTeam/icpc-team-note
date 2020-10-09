@@ -131,6 +131,127 @@ public:
 };
 ```
 
+### Segment tree with lazy propagation
+```C++
+// 합을 저장하는 세그먼트 트리.
+
+#include <vector>
+#include <cmath>
+
+template<typename T>
+class SegTree
+{
+private:
+    int count;
+    std::vector<T> tree;
+    std::vector<T> lazy;
+
+    T initialize(int index, int start, int end, const std::vector<T>& original)
+    {
+        if (start == end)
+            return tree[index] = original[start];
+        
+        int mid = (start + end) / 2;
+        T left = initialize(index * 2, start, mid, original);
+        T right = initialize(index * 2 + 1, mid + 1, end, original);
+
+        return tree[index] = (left + right);
+    }
+
+    void propagate(int index, int start, int end)
+    {
+        if (lazy[index] != 0)
+        {
+            tree[index] += lazy[index] * (end - start + 1);
+
+            if (start != end)
+            {
+                lazy[index * 2] += lazy[index];
+                lazy[index * 2 + 1] += lazy[index];
+            }
+
+            lazy[index] = 0;
+        }
+    }
+
+    T query(int index, int nodeStart, int nodeEnd, int reqStart, int reqEnd)
+    {
+        propagate(index, nodeStart, nodeEnd);
+
+        int nodeMid = (nodeStart + nodeEnd) / 2;
+
+        if (nodeStart > reqEnd || nodeEnd < reqStart)
+            return 0;
+
+        else if (nodeStart >= reqStart && nodeEnd <= reqEnd)
+            return tree[index];
+        
+        else
+        {
+            T left = query(index * 2, nodeStart, nodeMid, reqStart, reqEnd);
+            T right = query(index * 2 + 1, nodeMid + 1, nodeEnd, reqStart, reqEnd);
+            return left + right;
+        }
+    }
+
+    void update(T add, int dataStart, int dataEnd, int treeIndex, int treeStart, int treeEnd)
+    {
+        propagate(treeIndex, treeStart, treeEnd);
+
+        int treeMid = (treeStart + treeEnd) / 2;
+
+        if (dataEnd < treeStart || treeEnd < dataStart)
+            return;
+        
+        if (dataStart <= treeStart && treeEnd <= dataEnd)
+        {
+            tree[treeIndex] += add * (treeEnd - treeStart + 1);
+            if (treeStart != treeEnd)
+            {
+                lazy[treeIndex * 2] += add;
+                lazy[treeIndex * 2 + 1] += add;
+            }
+            return;
+        }
+
+        update(add, dataStart, dataEnd, treeIndex * 2, treeStart, treeMid);
+        update(add, dataStart, dataEnd, treeIndex * 2 + 1, treeMid + 1, treeEnd);
+
+        tree[treeIndex] = tree[treeIndex * 2] + tree[treeIndex * 2 + 1];
+    }
+    
+public:
+    SegTree(const std::vector<T>& original)
+    {
+        count = (int)original.size();
+        int treeHeight = (int)ceil(log2(count));
+        int vecSize = (1 << (treeHeight + 1));
+        tree.resize(vecSize);
+        lazy.resize(vecSize);
+        initialize(1, 0, count - 1, original);
+    }
+
+    SegTree(int size)
+    {
+        count = size;
+        int treeHeight = (int)ceil(log2(count));
+        int vecSize = (1 << (treeHeight + 1));
+        tree.resize(vecSize);
+        lazy.resize(vecSize);
+    }
+
+    T query(int start, int end)
+    {
+        return query(1, 0, count - 1, start, end);
+    }
+
+    void update(T add, int start, int end)
+    {
+        update(add, start, end, 1, 0, count - 1);
+    }
+};
+```
+
 ### Persistent Segment Tree
 ```C++
 class PST {
@@ -290,6 +411,76 @@ struct LiChaoTree {
             return max(nodes[i].line.f(x), get_max_y(nodes[i].r, x));
     }
 };
+```
+
+### Merge Sort Tree
+```C++
+#include <algorithm>
+#include <vector>
+
+struct Node
+{
+    std::vector<int> subArr;
+    int left, right;
+    Node* leftChild = nullptr;
+    Node* rightChild = nullptr;
+};
+
+void mergeSubArray(std::vector<int> &v1, std::vector<int> &v2, std::vector<int> &dest)
+{
+    dest.resize(v1.size() + v2.size());
+    size_t i1 = 0, i2 = 0, pos = 0;
+
+    while (i1 < v1.size() && i2 < v2.size())
+    {
+        if (v1[i1] <= v2[i2])
+            dest[pos++] = v1[i1++];
+        else
+            dest[pos++] = v2[i2++];
+    }
+
+    while (i1 < v1.size())
+        dest[pos++] = v1[i1++];
+    while (i2 < v2.size())
+        dest[pos++] = v2[i2++];
+}
+
+Node* buildNode(int left, int right, std::vector<int>& arr)
+{
+    Node *current = new Node;
+    current->left = left;
+    current->right = right;
+
+    if (left == right)
+        current->subArr.push_back(arr[left]);
+    
+    else 
+    {
+        int mid = (left+right)/2;
+        Node* leftChild = buildNode(left, mid, arr);
+        Node* rightChild = buildNode(mid+1, right, arr);
+        mergeSubArray(leftChild->subArr, rightChild->subArr, current->subArr);
+        current->leftChild = leftChild;
+        current->rightChild = rightChild;
+    }
+
+    return current;
+}
+
+int countBigger(Node* current, int threshold, int left, int right)
+{
+    if (current->right < left || right < current->left)
+        return 0;
+
+    if (left <= current->left && current->right <= right)
+    {
+        auto found = std::upper_bound(current->subArr.begin(), current->subArr.end(), threshold);
+        return current->subArr.end() - found;
+    }
+
+    return countBigger(current->leftChild, threshold, left, right)
+        + countBigger(current->rightChild, threshold, left, right);
+}
 ```
 
 ## Graph
@@ -851,6 +1042,47 @@ int main() {
 
 ## String
 
+### KMP
+```C++
+#include <string>
+#include <vector>
+
+std::vector<int> getFail(std::string& str)
+{
+    std::vector<int> fail(str.size(), 0);
+    for (int i = 1, j = 0; i < (int)str.size(); ++i)
+    {
+        while (j > 0 && str[i] != str[j])
+            j = fail[j-1];
+        if (str[i] == str[j])
+            fail[i] = ++j;
+    }
+
+    return fail;
+}
+
+void KMP(std::string& para, std::string& target, std::vector<int>& fail, std::vector<int>& found)
+{
+    fail = getFail(target);
+    found.clear();
+
+    for (int i = 0, j = 0; i < (int)para.size(); ++i)
+    {
+        while (j > 0 && para[i] != target[j])
+            j = fail[j-1];
+        if (para[i] == target[j])
+        {
+            if (j == (int)target.size()-1)
+            {
+                found.push_back(i-target.size()+2);
+                j = fail[j];
+            }
+            else j++;
+        }
+    }
+}
+```
+
 ### Trie
 ```C++
 struct Trie {
@@ -875,6 +1107,160 @@ struct Trie {
         go[next]->insert(key + 1);
     }
 };
+```
+
+### Aho-Corasick
+```C++
+#include <algorithm>
+#include <vector>
+#include <queue>
+#include <string>
+
+struct Trie
+{
+    Trie *next[26];
+    Trie *fail;
+    // 실제 매칭된 문자열이 필요하다면 아래 정의 사용
+    // std::vector<std::string> outputs;
+    // 매칭 여부만 필요하다면
+    bool matched = false;
+
+    Trie()
+    {
+        std::fill(next, next + 26, nullptr);
+    }
+
+    ~Trie()
+    {
+        for (int i = 0; i < 26; i++)
+            if (next[i])
+                delete next[i];
+    }
+    void insert(std::string &str, int start)
+    {
+        if ((int)str.size() <= start)
+        {
+            //outputs.push_back(str);
+            matched = true;
+            return;
+        }
+        int nextIdx = str[start] - 'a';
+        if (!next[nextIdx])
+        {
+            next[nextIdx] = new Trie;
+        }
+        next[nextIdx]->insert(str, start + 1);
+    }
+};
+
+void buildFail(Trie *root)
+{
+    std::queue<Trie *> q;
+    root->fail = root;
+    q.push(root);
+    while (!q.empty())
+    {
+        Trie *current = q.front();
+        q.pop();
+
+        for (int i = 0; i < 26; i++)
+        {
+            Trie *next = current->next[i];
+
+            if (!next)
+                continue;
+            if (current == root)
+                next->fail = root;
+            else
+            {
+                Trie *dest = current->fail;
+
+                while (dest != root && !dest->next[i])
+                    dest = dest->fail;
+
+                if (dest->next[i])
+                    dest = dest->next[i];
+                next->fail = dest;
+            }
+
+            /*if(next->fail->outputs.size() > 0) 
+                next->outputs.insert(next->outputs.end(), current->outputs.begin(), current->outputs.end());*/
+            if (next->fail->matched)
+                next->matched = true;
+
+            q.push(next);
+        }
+    }
+}
+
+bool find(Trie *root, std::string &query)
+{
+    Trie *current = root;
+    bool result = false;
+
+    for (int c = 0; c < (int)query.size(); c++)
+    {
+        int nextIdx = query[c] - 'a';
+
+        while (current != root && !current->next[nextIdx])
+            current = current->fail;
+
+        if (current->next[nextIdx])
+            current = current->next[nextIdx];
+
+        if (current->matched)
+        {
+            result = true;
+            break;
+        }
+    }
+
+    return result;
+}
+```
+
+### Suffix Array
+```C++
+#include <string>
+#include <vector>
+#include <algorithm>
+
+bool cmp(int i, int j, int d, int N, std::vector<int>& pos)
+{
+    if (pos[i] != pos[j])
+        return pos[i] < pos[j];
+        
+    i += d;
+    j += d;
+    return (i < N && j < N) ? (pos[i] < pos[j]) : (i > j);
+}
+
+void buildSufArr(std::string& str, std::vector<int>& sa, std::vector<int>& pos)
+{
+    int N = (int)str.size();
+    sa.resize(N, 0);
+    pos.resize(N, 0);
+
+    for (int i = 0; i < N; i++)
+    {
+        sa[i] = i;
+        pos[i] = str[i];
+    }
+    
+    for (int d = 1;; d *= 2)
+    {
+        std::sort(sa.begin(), sa.end(), cmp);
+
+        std::vector<int> temp(N, 0);
+        for (int i = 0; i < N - 1; i++)
+            temp[i + 1] = temp[i] + cmp(sa[i], sa[i + 1], d, N, pos);
+        for (int i = 0; i < N; i++)
+            pos[sa[i]] = temp[i];
+
+        if (temp[N - 1] == N - 1)
+            break;
+    }
+}
 ```
 
 ## Geometry
@@ -1088,6 +1474,121 @@ ans = ans * pow(fact[a - b], MOD - 2, MOD) % MOD;
 
 ## Dynamic Programming
 
+### Knuth
+```C++
+// Knuth Optimization을 적용하기 위한 조건
+
+/*
+조건 1: dp[i][j] = min_{i<k<j} (dp[i][k] + dp[k][j]) + C[i][j]
+조건 2: C[a][c] + C[b][d] <= C[a][d] + C[b][c] (a <= b <= c <= d)
+조건 3: C[b][c] <= C[a][d] (a <= b <= c <= d)
+*/
+
+// 위 세 조건이 만족될 경우, O(N^2)으로 해결가능
+
+#include <algorithm>
+#include <vector>
+#include <limits>
+
+typedef long long Long;
+const Long INF = 1LL<<32;
+int data[1003];
+Long d[1003][1003];
+int p[1003][1003];
+
+// data의 [left, right]에 값을 채우고 아래 함수를 실행하면 d에 dp값이 채워진다.
+void doKnuthOpt(int left, int right)
+{
+    for (int i = left; i <= right; i++)
+	{
+		d[i][i] = 0, p[i][i] = i;
+		for (int j = i + 1; j <= right; j++)
+			d[i][j] = 0, p[i][j] = i;
+	}
+
+	for (int l = 2; l <= right-left+1; l++) 
+	{
+		for (int i = left; i + l <= right; i++) 
+		{
+			int j = i + l;
+			d[i][j] = INF;
+			for (int k = p[i][j - 1]; k <= p[i + 1][j]; k++) 
+			{
+				if (d[i][j] > d[i][k] + d[k][j]) 
+				{
+					d[i][j] = d[i][k] + d[k][j];
+					p[i][j] = k;
+				}
+			}
+			d[i][j] += data[j] - data[i];
+		}
+	}
+}
+```
+
+### Divide and Conquer
+```C++
+// DnQ Optimization을 적용하기 위한 조건
+
+/*
+조건 1: dp[t][i] = min_{k<i} (dp[t-1][k] + C[k][i])
+*/
+
+/*
+조건 2: 아래 두 조건들 중 적어도 하나를 만족
+
+    a)  A[t][i]를 dp[t][i]를 만족시키는 최소의 k라고 할 때 아래 부등식을 만족
+        A[t][i] <= A[t][i+1]
+    
+    b)  비용 C가 a<=b<=c<=d인 a, b, c, d에 대하여
+        사각부등식 C[a][c] + C[b][d] <= C[a][d] + C[b][c] 를 만족
+*/
+
+// 위 두 조건이 만족될 경우, O(KN log N)으로 해결가능
+
+#include <iostream>
+#include <algorithm>
+
+typedef long long Long;
+
+int L, G;
+Long Ci[8001];
+Long sum[8001];
+
+Long dp[801][8001], properK[801][8001];
+
+// 문제에 맞게 Cost 정의
+Long Cost(Long a, Long b)
+{
+    return (sum[b] - sum[a - 1]) * (b - a + 1);
+}
+
+// dp[t][i] = min_{k<i} (dp[t-1][k] + C[k][i]) 꼴의 문제를 풀고자 할 때,
+// 아래 함수는 dp[t][l~r]을 채운다.
+void Find(int t, int l, int r, int p, int q)
+{
+    if (l > r)
+        return;
+
+    int mid = (l + r) >> 1;
+    dp[t][mid] = -1;
+    properK[t][mid] = -1;
+
+    for (int k = p; k <= q; ++k)
+    {
+        Long current = dp[t - 1][k] + Cost(k+1, mid);
+        if (dp[t][mid] == -1 || dp[t][mid] > current)
+        {
+            dp[t][mid] = current;
+            properK[t][mid] = k;
+        }
+    }
+
+    Find(t, l, mid - 1, p, properK[t][mid]);
+    Find(t, mid + 1, r, properK[t][mid], q);
+}
+```
+
 ### Convexhull Trick
 ```C++
 #include <bits/stdc++.h>
@@ -1165,6 +1666,125 @@ int main() {
 ```
 
 ## Etc.
+
+### Mo's Algorithm
+```C++
+#include <algorithm>
+#include <vector>
+#include <cmath>
+
+struct Query
+{
+    static int sqrtN;
+    int start, end, index;
+    
+    bool operator<(const Query& q) const
+    {
+        if (start / sqrtN != q.start / sqrtN)
+            return start / sqrtN < q.start / sqrtN;
+        else return end < q.end;
+    }
+};
+int Query::sqrtN = 0;
+
+std::vector<int> mosAlg(std::vector<int>& arr, std::vector<Query>& queries)
+{
+    // sqrt(arr의 크기)로 구간을 나누어 정렬
+    std::sort(queries.begin(), queries.end());
+
+    // 이 아래부터는 문제에 따라 다른 구현을 해야 함.
+    // 이전에 쿼리한 구간에서 양쪽을 새 구간으로 맞추어서 결과를 구함.
+    // 아래는 쿼리한 구간에서 존재하는 서로 다른 수의 개수를 구하는 예시 (BOJ 13547)
+    int currCount = 0;
+    std::vector<int> count(*std::max_element(arr.begin(), arr.end()) + 1);
+    std::vector<int> answer(queries.size());
+    int start = queries[0].start, end = queries[0].end;
+
+    for (int i = start; i < end; ++i)
+    {
+        ++count[arr[i]];
+        if (count[arr[i]] == 1)
+            ++currCount;
+    }
+    answer[queries[0].index] = currCount;
+
+    for (int i = 1; i < (int)queries.size(); ++i)
+    {
+        while (queries[i].start < start)
+        {
+            ++count[arr[--start]];
+            if (count[arr[start]] == 1)
+                ++currCount;
+        }
+
+        while (end < queries[i].end)
+        {
+            ++count[arr[end]];
+            if (count[arr[end++]] == 1)
+                ++currCount;
+        }
+
+        while (start < queries[i].start)
+        {
+            --count[arr[start]];
+            if (count[arr[start++]] == 0)
+                --currCount;
+        }
+
+        while (queries[i].end < end)
+        {
+            --count[arr[--end]];
+            if (count[arr[end]] == 0)
+                --currCount;
+        }
+        
+        answer[queries[i].index] = currCount;
+    }
+
+    return answer;
+}
+```
+
+### 히스토그램에서 가장 큰 직사각형
+```C++
+#include <stack>
+#include <algorithm>
+#include <vector>
+
+typedef long long Long;
+
+Long findLargestFromHist(std::vector<Long>& hist)
+{
+    int n = hist.size();
+    std::stack<std::pair<Long, int>> s;
+    Long result = 0;
+    s.emplace(hist[0], 0);
+    for (int i = 1; i < n; ++i)
+    {
+        while (!s.empty() && hist[i] < s.top().first)
+        {
+            std::pair<Long, int> prev = s.top();
+            s.pop();
+            Long height = prev.first;
+            int width = (s.empty() ? i : i - s.top().second - 1);
+            result = std::max(width * height, result);
+        }
+
+        s.emplace(hist[i], i);
+    }
+
+    while (!s.empty())
+    {
+        std::pair<Long, int> prev = s.top();
+        s.pop();
+        Long height = prev.first;
+        int width = (s.empty() ? n : n - s.top().second - 1);
+        result = std::max(width * height, result);
+    }
+
+    return result;
+}
+```
 
 ### 가장 가까운 두 점
 ```C++
