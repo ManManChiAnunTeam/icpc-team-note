@@ -2076,5 +2076,21 @@ struct SegTree{
         }
         return pos-start;
     }
+    void update(int lo, int hi, int val, int node, int x, int y) {
+        if (y < lo || hi < x)
+            return;
+        if (lo <= x&&y <= hi)
+            cnt[node] += val;
+        else {
+            int mid = (x + y) >> 1;
+            update(lo, hi, val, node * 2, x, mid);
+            update(lo, hi, val, node * 2 + 1, mid + 1, y);
+        }
+        if (cnt[node])seg[node] = y - x + 1;
+        else {
+            if (x == y)seg[node] = 0;
+            else seg[node] = seg[node * 2] + seg[node * 2 + 1];
+        }
+    }
 };
 ```
