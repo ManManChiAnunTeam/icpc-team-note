@@ -1,5 +1,13 @@
 # 2020 ACM-ICPC ManManChiAnunTeam Team Note
 
+## 꿀팁
+- 침착하자
+- 테스트를 많이 해보자
+- 쉬운 거 먼저 풀자
+- long long
+- long double
+- n, m 구분
+
 ## Tree
 
 ### LCA
