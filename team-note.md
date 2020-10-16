@@ -1654,6 +1654,11 @@ int data[1003];
 Long d[1003][1003];
 int p[1003][1003];
 
+int getCost(int left, int right)
+{
+    // define your cost function here
+}
+
 // data의 [left, right]에 값을 채우고 아래 함수를 실행하면 d에 dp값이 채워진다.
 void doKnuthOpt(int left, int right)
 {
@@ -1672,13 +1677,13 @@ void doKnuthOpt(int left, int right)
 			d[i][j] = INF;
 			for (int k = p[i][j - 1]; k <= p[i + 1][j]; k++) 
 			{
-				if (d[i][j] > d[i][k] + d[k][j]) 
+                int current = d[i][k] + d[k][j] + getCost(i, j);
+				if (d[i][j] > current) 
 				{
-					d[i][j] = d[i][k] + d[k][j];
+					d[i][j] = current;
 					p[i][j] = k;
 				}
 			}
-			d[i][j] += data[j] - data[i];
 		}
 	}
 }
