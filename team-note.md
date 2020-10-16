@@ -1,6 +1,7 @@
 # 2020 ACM-ICPC ManManChiAnunTeam Team Note
 
 ## 꿀팁
+- 우리에게 불가능이라는 선택지는 없다.
 - DP가 아닌 것 같은 문제도 DP일 수 있다.
 - 그리디가 아닌 것 같은 문제도 그리디일 수 있다.
 - 침착하자
