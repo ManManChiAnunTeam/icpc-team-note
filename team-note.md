@@ -129,122 +129,66 @@ public:
 
 ### Segment tree with lazy propagation
 ```C++
-// 합을 저장하는 세그먼트 트리.
+template<typename T> class SegTree {
+    int MIN, MAX;
+    vector<T> node, lazy;
 
-#include <vector>
-#include <cmath>
-
-template<typename T>
-class SegTree
-{
-private:
-    int count;
-    std::vector<T> tree;
-    std::vector<T> lazy;
-
-    T initialize(int index, int start, int end, const std::vector<T>& original)
-    {
-        if (start == end)
-            return tree[index] = original[start];
-        
-        int mid = (start + end) / 2;
-        T left = initialize(index * 2, start, mid, original);
-        T right = initialize(index * 2 + 1, mid + 1, end, original);
-
-        return tree[index] = (left + right);
+    T init(int node_num, int node_s, int node_e, const vector<T>& data) {
+        if (node_s == node_e)
+            return node[node_num] = data[node_s];
+        int node_m = (node_s + node_e) / 2;
+        T left = init(node_num * 2, node_s, node_m, data);
+        T right = init(node_num * 2 + 1, node_m + 1, node_e, data);
+        return node[node_num] = left + right;
     }
-
-    void propagate(int index, int start, int end)
-    {
-        if (lazy[index] != 0)
-        {
-            tree[index] += lazy[index] * (end - start + 1);
-
-            if (start != end)
-            {
-                lazy[index * 2] += lazy[index];
-                lazy[index * 2 + 1] += lazy[index];
-            }
-
-            lazy[index] = 0;
+    void prop(int node_num, int node_s, int node_e) {
+        node[node_num] += lazy[node_num] * (node_e - node_s + 1);
+        if (node_s != node_e) {
+            lazy[node_num * 2] += lazy[node_num];
+            lazy[node_num * 2 + 1] += lazy[node_num];
         }
+        lazy[node_num] = 0;
     }
-
-    T query(int index, int nodeStart, int nodeEnd, int reqStart, int reqEnd)
-    {
-        propagate(index, nodeStart, nodeEnd);
-
-        int nodeMid = (nodeStart + nodeEnd) / 2;
-
-        if (nodeStart > reqEnd || nodeEnd < reqStart)
+    T query(int node_num, int node_s, int node_e, int req_s, int req_e) {
+        prop(node_num, node_s, node_e);
+        if (node_s > req_e || node_e < req_s)
             return 0;
-
-        else if (nodeStart >= reqStart && nodeEnd <= reqEnd)
-            return tree[index];
-        
-        else
-        {
-            T left = query(index * 2, nodeStart, nodeMid, reqStart, reqEnd);
-            T right = query(index * 2 + 1, nodeMid + 1, nodeEnd, reqStart, reqEnd);
-            return left + right;
-        }
+        if (node_s >= req_s && node_e <= req_e)
+            return node[node_num];
+        int node_m = (node_s + node_e) / 2;
+        T left = query(node_num * 2, node_s, node_m, req_s, req_e);
+        T right = query(node_num * 2 + 1, node_m + 1, node_e, req_s, req_e);
+        return left + right;
     }
-
-    void update(T add, int dataStart, int dataEnd, int treeIndex, int treeStart, int treeEnd)
-    {
-        propagate(treeIndex, treeStart, treeEnd);
-
-        int treeMid = (treeStart + treeEnd) / 2;
-
-        if (dataEnd < treeStart || treeEnd < dataStart)
+    void update(int node_num, int node_s, int node_e, int req_s, int req_e, T add) {
+        prop(node_num, node_s, node_e);
+        if (req_e < node_s || node_e < req_s)
             return;
-        
-        if (dataStart <= treeStart && treeEnd <= dataEnd)
-        {
-            tree[treeIndex] += add * (treeEnd - treeStart + 1);
-            if (treeStart != treeEnd)
-            {
-                lazy[treeIndex * 2] += add;
-                lazy[treeIndex * 2 + 1] += add;
+        if (req_s <= node_s && node_e <= req_e) {
+            node[node_num] += add * (node_e - node_s + 1);
+            if (node_s != node_e) {
+                lazy[node_num * 2] += add;
+                lazy[node_num * 2 + 1] += add;
             }
             return;
         }
-
-        update(add, dataStart, dataEnd, treeIndex * 2, treeStart, treeMid);
-        update(add, dataStart, dataEnd, treeIndex * 2 + 1, treeMid + 1, treeEnd);
-
-        tree[treeIndex] = tree[treeIndex * 2] + tree[treeIndex * 2 + 1];
+        int node_m = (node_s + node_e) / 2;
+        update(node_num * 2, node_s, node_m, req_s, req_e, add);
+        update(node_num * 2 + 1, node_m + 1, node_e, req_s, req_e, add);
+        node[node_num] = node[node_num * 2] + node[node_num * 2 + 1];
     }
-    
 public:
-    SegTree(const std::vector<T>& original)
-    {
-        count = (int)original.size();
-        int treeHeight = (int)ceil(log2(count));
-        int vecSize = (1 << (treeHeight + 1));
-        tree.resize(vecSize);
-        lazy.resize(vecSize);
-        initialize(1, 0, count - 1, original);
+    SegTree(int MIN, int MAX) : MIN(MIN), MAX(MAX) {
+        node.resize(4 * (MAX - MIN));
+        lazy.resize(4 * (MAX - MIN));
     }
-
-    SegTree(int size)
-    {
-        count = size;
-        int treeHeight = (int)ceil(log2(count));
-        int vecSize = (1 << (treeHeight + 1));
-        tree.resize(vecSize);
-        lazy.resize(vecSize);
+    SegTree(const vector<T>& data) : MIN(0), MAX(int(data.size())) {
+        node.resize(4 * (MAX - MIN));
+        lazy.resize(4 * (MAX - MIN));
+        init(1, MIN, MAX, data);
     }
-
-    T query(int start, int end)
-    {
-        return query(1, 0, count - 1, start, end);
-    }
-
-    void update(T add, int start, int end)
-    {
-        update(add, start, end, 1, 0, count - 1);
-    }
+    T query(int start, int end) { return query(1, MIN, MAX, start, end); }
+    void update(int start, int end, T value) { update(1, MIN, MAX, start, end, value); }
 };
 ```
 
