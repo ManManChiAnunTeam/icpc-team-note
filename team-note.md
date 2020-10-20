@@ -99,7 +99,7 @@ template<typename T> class SegTree {
     T f(T a, T b) { return a + b; }
 
     T query(int node_num, int node_s, int node_e, int req_s, int req_e) {
-        if (node_s > req_e || node_e < req_s)
+        if (req_e < node_s || node_e < req_s)
             return 0;
         if (req_s <= node_s && node_e <= req_e)
             return node[node_num];
@@ -111,7 +111,7 @@ template<typename T> class SegTree {
     void update(int node_num, int node_s, int node_e, int req_i, T value) {
         if (req_i < node_s || node_e < req_i)
             return;
-        if(node_s == node_e) {
+        if (node_s == node_e) {
             node[node_num] = value;
             return;
         }
@@ -151,9 +151,9 @@ template<typename T> class SegTree {
     }
     T query(int node_num, int node_s, int node_e, int req_s, int req_e) {
         prop(node_num, node_s, node_e);
-        if (node_s > req_e || node_e < req_s)
+        if (req_e < node_s || node_e < req_s)
             return 0;
-        if (node_s >= req_s && node_e <= req_e)
+        if (req_s <= node_s && node_e <= req_e)
             return node[node_num];
         int node_m = (node_s + node_e) / 2;
         T left = query(node_num * 2, node_s, node_m, req_s, req_e);
@@ -165,11 +165,8 @@ template<typename T> class SegTree {
         if (req_e < node_s || node_e < req_s)
             return;
         if (req_s <= node_s && node_e <= req_e) {
-            node[node_num] += value * (node_e - node_s + 1);
-            if (node_s != node_e) {
-                lazy[node_num * 2] += value;
-                lazy[node_num * 2 + 1] += value;
-            }
+            lazy[node_num] += value;
+            prop(node_num, node_s, node_e);
             return;
         }
         int node_m = (node_s + node_e) / 2;
@@ -182,7 +179,7 @@ public:
         node.resize(4 * (MAX - MIN));
         lazy.resize(4 * (MAX - MIN));
     }
-    SegTree(const vector<T>& data) : MIN(0), MAX(int(data.size())) {
+    SegTree(const vector<T>& data) : MIN(0), MAX(int(data.size()) - 1) {
         node.resize(4 * (MAX - MIN));
         lazy.resize(4 * (MAX - MIN));
         init(1, MIN, MAX, data);
