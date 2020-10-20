@@ -92,53 +92,38 @@ int main() {
 
 ### Segment Tree
 ```C++
-class SegTree {
-    struct Node {
-        int b, e;
-        long long s;
-        Node *l, *r;
-        Node(int b, int e) : b(b), e(e), s(0), l(nullptr), r(nullptr) {}
-    };
+template<typename T> class SegTree {
+    int MIN, MAX;
+    vector<T> node;
+    
+    T f(T a, T b) { return a + b; }
 
-    Node *root;
-
-    void update_(Node *now, int i, int value) {
-        if (now->b == now->e) {
-            now->s = value;
+    T query(int node_num, int node_s, int node_e, int req_s, int req_e) {
+        if (node_s > req_e || node_e < req_s)
+            return 0;
+        if (req_s <= node_s && node_e <= req_e)
+            return node[node_num];
+        int node_m = (node_s + node_e) / 2;
+        T left = query(node_num * 2, node_s, node_m, req_s, req_e);
+        T right = query(node_num * 2 + 1, node_m + 1, node_e, req_s, req_e);
+        return f(left, right);
+    }
+    void update(int node_num, int node_s, int node_e, int req_i, T value) {
+        if (req_i < node_s || node_e < req_i)
+            return;
+        if(node_s == node_e) {
+            node[node_num] = value;
             return;
         }
-        int mid = (now->b + now->e) / 2;
-        if (i <= mid) {
-            if (!now->l) now->l = new Node(now->b, mid);
-            update_(now->l, i, value);
-        } else {
-            if (!now->r) now->r = new Node(mid + 1, now->e);
-            update_(now->r, i, value);
-        }
-        now->s = (now->l ? now->l->s : 0) + (now->r ? now->r->s : 0);
+        int node_m = (node_s + node_e) / 2;
+        update(node_num * 2, node_s, node_m, req_i, value);
+        update(node_num * 2 + 1, node_m + 1, node_e, req_i, value);
+        node[node_num] = f(node[node_num * 2], node[node_num * 2 + 1]);
     }
-
-    long long get_sum_(Node *now, int b, int e) {
-        if (!now || e < now->b || now->e < b)
-            return 0;  // out of range
-        else if (b <= now->b && now->e <= e)
-            return now->s;  // included
-        else
-            return get_sum_(now->l, b, e) + get_sum_(now->r, b, e);
-    }
-
-    void delete_nodes(Node *now) {
-        if (!now) return;
-        delete_nodes(now->l);
-        delete_nodes(now->r);
-        delete now;
-    }
-
 public:
-    SegTree(int N) { root = new Node(1, N); }
-    void update(int i, int value) { update_(root, i, value); }
-    long long get_sum(int b, int e) { return get_sum_(root, b, e); }
-    ~SegTree() { delete_nodes(root); }
+    SegTree(int MIN, int MAX) : MIN(MIN), MAX(MAX) { node.resize(4 * (MAX - MIN)); }
+    T query(int start, int end) { return query(1, MIN, MAX, start, end); }
+    void update(int i, T add) { update(1, MIN, MAX, i, add); }
 };
 ```
 
@@ -2050,6 +2035,16 @@ bool comp_y(coo a, coo b)
 }
 ```
 
+### 좌표 압축
+```C++
+vector<int> s;
+for(int i=1; i<=n; i++) s.push_back(Q[i]);
+sort(s.begin(), s.end());
+s.erase(unique(s.begin(), s.end()), s.end());
+for(int i=1; i<=n; i++)
+    Q[i] = lower_bound(s.begin(), s.end(), Q[i]) - s.begin();
+```
+
 ### iknoom's segtree
 ```C++
 const int SIZE = 2097152;
@@ -2110,3 +2105,4 @@ struct SegTree{
     }
 };
 ```
+
