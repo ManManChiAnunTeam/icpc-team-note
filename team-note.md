@@ -129,6 +129,61 @@ public:
 };
 ```
 
+### Dynamic segment tree
+```C++
+template<typename T> class SegTree {
+    // Segment tree가 구하고자 하는 값에 따라 변경
+    const T BOUND = 0;
+    inline T f(T a, T b) { return max(a, b); }
+
+    struct Node {
+        int s, e;
+        T value;
+        int l, r;
+        Node(int s, int e, T value, int l, int r): s(s), e(e), value(value), l(l), r(r) {}
+    };
+    vector<Node> node;
+    int MIN, MAX;
+
+    T query(int k, int req_s, int req_e) {
+        if(req_e < node[k].s || node[k].e < req_s)
+            return BOUND;
+        if(req_s <= node[k].s && node[k].e <= req_e)
+            return node[k].value;
+        T left = node[k].l != -1 ? query(node[k].l, req_s, req_e) : BOUND;
+        T right = node[k].r != -1 ? query(node[k].r, req_s, req_e) : BOUND;
+        return f(left, right);
+    }
+    void update(int k, int req_i, T value) {
+        if (node[k].s == node[k].e) {
+            node[k].value = f(node[k].value, value);
+            return;
+        }
+        int m = (node[k].s + node[k].e) / 2;
+        if(req_i <= m) {
+            if(node[k].l == -1) {
+                node[k].l = node.size();
+                node.emplace_back(node[k].s, m, BOUND, -1, -1);
+            }
+            update(node[k].l, req_i, value);
+        } else {
+            if(node[k].r == -1) {
+                node[k].r = node.size();
+                node.emplace_back(m + 1, node[k].e, BOUND, -1, -1);
+            }
+            update(node[k].r, req_i, value);
+        }
+        T left = node[k].l != -1 ? node[node[k].l].value : BOUND;
+        T right = node[k].r != -1 ? node[node[k].r].value : BOUND;
+        node[k].value = f(left, right);
+    }
+public:
+    SegTree(int MIN, int MAX) : MIN(MIN), MAX(MAX) { node.emplace_back(MIN, MAX, BOUND, -1, -1); }
+    T query(int start, int end) { return query(0, start, end); }
+    void update(int i, T value) { update(0, i, value); }
+};
+```
+
 ### Segment tree with lazy propagation
 ```C++
 template<typename T> class SegTree {
