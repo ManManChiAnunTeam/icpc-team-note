@@ -90,17 +90,19 @@ int main() {
 }
 ```
 
-### Segment Tree
+### Segment tree
 ```C++
 template<typename T> class SegTree {
+    // Segment tree가 구하고자 하는 값에 따라 변경
+    const T BOUNDARY = 0;
+    T f(T a, T b) { return a + b; }
+
     int MIN, MAX;
     vector<T> node;
-    
-    T f(T a, T b) { return a + b; }
 
     T query(int node_num, int node_s, int node_e, int req_s, int req_e) {
         if (req_e < node_s || node_e < req_s)
-            return 0;
+            return BOUNDARY;
         if (req_s <= node_s && node_e <= req_e)
             return node[node_num];
         int node_m = (node_s + node_e) / 2;
