@@ -134,7 +134,7 @@ public:
 template<typename T> class SegTree {
     // Segment tree가 구하고자 하는 값에 따라 변경
     const T BOUND = 0;
-    inline T f(T a, T b) { return max(a, b); }
+    inline T f(T a, T b) { return a + b; }
 
     struct Node {
         int s, e;
@@ -156,7 +156,7 @@ template<typename T> class SegTree {
     }
     void update(int k, int req_i, T value) {
         if (node[k].s == node[k].e) {
-            node[k].value = f(node[k].value, value);
+            node[k].value = value;
             return;
         }
         int m = (node[k].s + node[k].e) / 2;
