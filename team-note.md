@@ -570,6 +570,7 @@ public:
         return res;
     }
 };
+// 주의 : 양방향 간선이 아니라 단방햔 간선일 경우 수정할 것
 ```
 
 ### Hopcroft-Karp
@@ -647,8 +648,13 @@ int hopcroft_karp() {
     }
     return match;
 }
+// 전역변수 N의 크기에 주의
+```
 
-// vertex cover
+### Vertex cover
+
+```C++
+// 위에 Hopcroft-Karp에서 추가할 것
 bool check_a[MAX], check_b[MAX];
 vector<int> l, r;
 
@@ -668,17 +674,16 @@ void getcover() {
     for (int i = 0; i < N; i++) if (!check_a[i]) l.push_back(i);
     for (int i = 0; i < M; i++) if (check_b[i]) r.push_back(i);
 }
-
-
+// getcover()
+// vector<int> l, r;
+// for (int i = 0; i < N; i++) if (!check_a[i]) l.push_back(i);
+// for (int i = 0; i < M; i++) if (check_b[i]) r.push_back(i);
 ```
 
 ### MCMF
 ```C++
-#include <bits/stdc++.h>
-
-using namespace std;
-const int MAX_V = 2005;
-const int MAX_A = 1000;
+const int MAX_V = 2002;
+const int MAX_A = 1000; // 편의를 위해 나눈 것 ex) A 100개 B 100개 -> b_i + MAX_A
 enum {
     SOURCE = 2001,
     SINK
@@ -782,29 +787,9 @@ int make_flow(int source, int sink) { // Edmonds-Karp
     }
     return total;
 }
-
-int main() {
-    cin >> N >> M ;
-
-    for (int u = 0; u < N; u++) {
-        make_edge(SOURCE, u, 1, 0);
-    }
-    for (int u = 0; u < N; u++) {
-        int s; cin >> s;
-        while (s--) {
-            int v, cost; cin >> v >> cost;
-            v--; v += MAX_A;
-            make_edge(u, v, 1, cost);
-        }
-    }
-    for (int u = MAX_A; u < MAX_A + M; u++) {
-        make_edge(u, SINK, 1, 0);
-    }
-
-    mcmf();
-    cout << ans_flow << '\n';
-    cout << ans_cost << '\n';
-}
+// mcmf();
+// cout << ans_flow << '\n';
+// cout << ans_cost << '\n';
 ```
 
 ### 2-SAT
@@ -1000,8 +985,6 @@ int main() {
 
 ### Dijkstra
 ```C++
-#include <bits/stdc++.h>
-using namespace std;
 const int MAX_V = 20000;
 const int INF = 1e9;
 typedef pair<int, int> pi;
