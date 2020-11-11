@@ -1472,10 +1472,6 @@ void f() {
 ## Math
 ### FFT
 ```C++
-#include <bits/stdc++.h>
-
-using namespace std;
-
 const double pi = 3.14159265358979323846264;
 typedef complex<double> base;
 
@@ -1526,25 +1522,12 @@ void multiply(const vector<long long> &a, const vector<long long> &b, vector<lon
 }
 
 int main() {
-    long long n;
-    cin >> n;
+    int n; cin >> n;
     vector<long long> x(n, 0), y(n, 0), z;
-    for (long long a = 1; a < n; a++) {
-        x[(a * a) % n]++;
-        y[(a * a * 2) % n]++;
-    }
-    multiply(x, x, z);
-    for (long long i = n; i < z.size(); i++) {
-        z[i % n] += z[i];
-    }
-    long long result = 0;
-    for (int i = 0; i < n; i++) {
-        long long p, q;
-        p = z[i] * x[i];
-        q = y[i] * x[i];
-        result += (p - q)/2 + q;
-    }
-    cout << result << '\n';
+    // X = a0 * 10^0 + a1 * 10^1 + ...
+    // Y = b0 * 10^0 + b1 * 10^1 + ...
+    // Z = X * Y
+    multiply(x, y, z);
 }
 ```
 ### fermat's little theorem
