@@ -19,77 +19,57 @@
 ### LCA
 ```C++
 // O(nlogn)
-#include <iostream>
-#include <vector>
+const int MAX_D = 17;
+const int MAXN = 100000;
 
-#define MAXN 30001
-#define MAX_PSIZE 15
-
-using namespace std;
-
-int n, p[MAXN][MAX_PSIZE], d[MAXN];
+int N, p[MAXN][MAX_D], depth[MAXN];
 vector<int> adj[MAXN];
-bool v[MAXN];
+bool vst[MAXN];
 
-void dfs(int i, int depth) {
-    v[i] = true, d[i] = depth;
+void dfs(int i, int d) {
+    vst[i] = true, depth[i] = d;
     for (int j : adj[i])
-        if (!v[j]) {
+        if (!vst[j]) {
             p[j][0] = i;
-            dfs(j, depth + 1);
+            dfs(j, d + 1);
         }
 }
 
-void compute_p() {
-    for (int j = 1; j < MAX_PSIZE; j++)
-        for (int i = 1; i <= n; i++)
+void construct_lca() {
+    dfs(0, 0);
+    for (int j = 1; j < MAX_D; j++)
+        for (int i = 1; i < N; i++)
             p[i][j] = p[p[i][j - 1]][j - 1];
 }
 
 int find_lca(int a, int b) {
     // Make a have a higher depth
-    if (d[a] < d[b]) swap(a, b);
+    if (depth[a] < depth[b]) swap(a, b);
 
     // Elevate a to the depth of b
-    int depth_diff = d[a] - d[b];
-    for (int j = MAX_PSIZE - 1; j >= 0; j--)
+    int depth_diff = depth[a] - depth[b];
+    for (int j = MAX_D - 1; j >= 0; j--)
         if (depth_diff & (1 << j))
             a = p[a][j];
 
     if (a == b) return a;
 
-    for (int j = MAX_PSIZE - 1; j >= 0; j--)
+    for (int j = MAX_D - 1; j >= 0; j--)
         if (p[a][j] != p[b][j])
             a = p[a][j], b = p[b][j];
 
-    if (p[a][0] == p[b][0] && p[a][0]) return p[a][0];
-    else return -1;
+    return p[a][0];
 }
 
 int main() {
-    cin >> n;
-    for (int i = 0; i < n - 1; i++) {
+    cin >> N;
+    for (int i = 0; i < N - 1; i++) {
         int x, y;
         cin >> x >> y;
+        x--; y--;
         adj[x].push_back(y), adj[y].push_back(x);
     }
-
-    for (int i = 1; i <= n; i++)
-        if (!v[i]) dfs(i, 0);
-
-    compute_p();
-
-    int m, x, y, total = 0;
-    cin >> m;
-    cin >> x;
-    for (int i = 1; i < m; i++) {
-        cin >> y;
-        int lca = find_lca(x, y);
-        if (lca != -1) total += d[x] + d[y] - 2 * d[lca];
-        x = y;
-    }
-
-    cout << total;
+    construct_lca();
 }
 ```
 
