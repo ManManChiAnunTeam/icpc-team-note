@@ -1028,7 +1028,17 @@ int main() {
     dijkstra(start);
 }
 ```
+### Floyd-Warshall
+
+```C++
+for (int k = 0; k < N; k++)
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])
+```
+
 ### BCC
+
 ```C++
 const int MAX = 100000;
 typedef pair<int, int> P;
@@ -1706,7 +1716,70 @@ void Find(int t, int l, int r, int p, int q)
 }
 ```
 
-### Convexhull Trick
+### Convex hull trick
+```C++
+struct Line {
+    long long a, b;
+    Line(long long a, long long b) : a(a), b(b) {}
+};
+
+inline bool x_on_right(Line &l0, Line &l1, long long x) {
+    return l1.b - l0.b <= (l0.a - l1.a) * x;
+}
+
+inline bool l2_on_right(Line &l0, Line &l1, Line &l2) {
+    return (double)(l1.b - l0.b) / (l2.b - l1.b) < (double)(l0.a - l1.a) / (l1.a - l2.a);
+}
+
+int main() {
+    int n;
+    cin >> n;
+
+    vector<long long> a(n + 1), b(n + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for (int i = 1; i <= n; i++) {
+        cin >> b[i];
+    }
+
+    vector<long long> d(n + 1);
+    vector<Line> s;
+    for (int i = 2; i <= n; i++) {
+        Line l2 = {b[i - 1], d[i - 1]};  // a, b
+        while (s.size() >= 2) {
+            int e = int(s.size()) - 1;
+            Line l0 = s[e - 1], l1 = s[e];
+            if (l2_on_right(l0, l1, l2)) {
+                break;
+            }
+            s.pop_back();
+        }
+        s.push_back(l2);
+
+        Line l = s.front();
+        if (s.size() >= 2) {  // 직선이 2개 이상일 때만
+            int low = 0, high = int(s.size()) - 2;
+            while (low <= high) {  // 이분 탐색
+                int mid = (low + high) / 2;
+                Line l0 = s[mid], l1 = s[mid + 1];
+                if (x_on_right(l0, l1, a[i])) {  // x[i]가 l0, l1 교점 오른쪽에 있을 때
+                    l = l1;
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+        }
+
+        d[i] = l.a * a[i] + l.b;
+    }
+    cout << d[n];
+}
+```
+
+### iknoom's CHT
+
 ```C++
 #include <bits/stdc++.h>
 
@@ -2070,6 +2143,75 @@ struct SegTree{
             if (x == y)seg[node] = 0;
             else seg[node] = seg[node * 2] + seg[node * 2 + 1];
         }
+    }
+};
+// 
+const int INF = 1e9;
+
+struct Node{
+    int s, m, l, r;
+    Node() : s(0), m(-INF), l(-INF), r(-INF) { }
+    Node operator+(Node &right) {
+        Node ret;
+        ret.s = s + right.s;
+        ret.l = max(l, s + right.l);
+        ret.r = max(right.r, r + right.s);
+        ret.m = max(r + right.l, max(m, right.m));
+        return ret;
+    }
+};
+
+struct SegmentTree{
+    vector<Node> data;
+    int n;
+    SegmentTree(int size) {
+        int p = 1;
+        while (p < size) p *= 2;
+        data.resize(p * 2);
+        n = p;
+    }
+
+    void set(int i, int v) {
+        i += n - 1;
+        data[i].s = v;
+        data[i].l = v;
+        data[i].r = v;
+        data[i].m = v;
+    }
+
+    void build() {
+        for (int i = n - 2; i >= 0; i--) {
+            data[i] = data[i * 2 + 1] + data[i * 2 + 2];
+        }
+    }
+
+    void update(int i, int v) {
+        set(i, v);
+        i += n - 1;
+        while (i > 0) {
+            i = (i - 1) / 2;
+            data[i] = data[i * 2 + 1] + data[i * 2 + 2];
+        }
+    }
+
+    int query(int l, int r){
+        l += n;
+        r += n + 1;
+        Node ret_l = Node();
+        Node ret_r = Node();
+        while (l < r) {
+            if (r & 1) {
+                r--;
+                ret_r = data[r - 1] + ret_r;
+            }
+            if (l & 1) {
+                ret_l = ret_l + data[l - 1];
+                l++;
+            }
+            l >>= 1;
+            r >>= 1;
+        }
+        return (ret_l + ret_r).m;
     }
 };
 ```
