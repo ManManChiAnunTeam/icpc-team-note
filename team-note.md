@@ -1728,23 +1728,42 @@ inline bool x_on_right(Line &l0, Line &l1, long long x) {
 }
 
 inline bool l2_on_right(Line &l0, Line &l1, Line &l2) {
-    return (l1.b - l0.b) * (l1.a - l2.a) < (l2.b - l1.b) * (l0.a - l1.a);
+    return (double)(l1.b - l0.b) / (l2.b - l1.b) < (double)(l0.a - l1.a) / (l1.a - l2.a);
 }
 
 int main() {
-	// ...
-    vector<long long> dp(N + 1);
-    vector<Line> st;
-    st.emplace_back(y[1], dp[0]);  // a, b
+    int n;
+    cin >> n;
 
-    for (int i = 1; i <= N; i++) {
-        Line l = st.front();
-        if (st.size() >= 2) {  // 직선이 2개 이상일 때만
-            int low = 0, high = int(st.size()) - 2;
+    vector<long long> a(n + 1), b(n + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    for (int i = 1; i <= n; i++) {
+        cin >> b[i];
+    }
+
+    vector<long long> d(n + 1);
+    vector<Line> s;
+    for (int i = 2; i <= n; i++) {
+        Line l2 = {b[i - 1], d[i - 1]};  // a, b
+        while (s.size() >= 2) {
+            int e = int(s.size()) - 1;
+            Line l0 = s[e - 1], l1 = s[e];
+            if (l2_on_right(l0, l1, l2)) {
+                break;
+            }
+            s.pop_back();
+        }
+        s.push_back(l2);
+
+        Line l = s.front();
+        if (s.size() >= 2) {  // 직선이 2개 이상일 때만
+            int low = 0, high = int(s.size()) - 2;
             while (low <= high) {  // 이분 탐색
                 int mid = (low + high) / 2;
-                Line l0 = st[mid], l1 = st[mid + 1];
-                if (x_on_right(l0, l1, x[i])) {  // x[i]가 l0, l1 교점 오른쪽에 있을 때
+                Line l0 = s[mid], l1 = s[mid + 1];
+                if (x_on_right(l0, l1, a[i])) {  // x[i]가 l0, l1 교점 오른쪽에 있을 때
                     l = l1;
                     low = mid + 1;
                 } else {
@@ -1753,20 +1772,9 @@ int main() {
             }
         }
 
-        dp[i] = l.a * x[i] + l.b;
-
-        Line l2 = {y[i + 1], dp[i]};
-        while (st.size() >= 2) {
-            int e = int(st.size()) - 1;
-            Line l0 = st[e - 1], l1 = st[e];
-            if (l2_on_right(l0, l1, l2)) {
-                break;
-            }
-            st.pop_back();
-        }
-        st.push_back(l2);
+        d[i] = l.a * a[i] + l.b;
     }
-    cout << dp[N];
+    cout << d[n];
 }
 ```
 
