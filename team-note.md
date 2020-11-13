@@ -1718,28 +1718,34 @@ void Find(int t, int l, int r, int p, int q)
 
 ### Convex hull trick
 ```C++
-inline bool is_right(long long a1, long long b1, long long a2, long long b2, int x0) {
-    return b2 - b1 <= (a1 - a2) * x0;
+struct Line {
+    long long a, b;
+    Line(long long a, long long b) : a(a), b(b) {}
+};
+
+inline bool x_on_right(Line &l0, Line &l1, long long x) {
+    return l1.b - l0.b <= (l0.a - l1.a) * x;
 }
-inline bool is_right(long long a1, long long b1, long long a2, long long b2, long long a3, long long b3) {
-    return (b2 - b1) * (a2 - a3) < (b3 - b2) * (a1 - a2);
+
+inline bool l2_on_right(Line &l0, Line &l1, Line &l2) {
+    return (l1.b - l0.b) * (l1.a - l2.a) < (l2.b - l1.b) * (l0.a - l1.a);
 }
+
 int main() {
-	// ... 
-    vector<long long> dp(N+1);
-    vector<int> st;
-    st.push_back(0);
-    for(int i=1; i<=N; i++) {
-        int j = 0;
-        if(st.size() >= 2) {
+	// ...
+    vector<long long> dp(N + 1);
+    vector<Line> st;
+    st.emplace_back(y[1], dp[0]);  // a, b
+
+    for (int i = 1; i <= N; i++) {
+        Line l = st.front();
+        if (st.size() >= 2) {  // 직선이 2개 이상일 때만
             int low = 0, high = int(st.size()) - 2;
-            while(low <= high) {
+            while (low <= high) {  // 이분 탐색
                 int mid = (low + high) / 2;
-                int k1 = st[mid], k2 = st[mid+1];
-                long long a1 = l[k1+1], b1 = dp[k1];
-                long long a2 = l[k2+1], b2 = dp[k2];
-                if(is_right(a1, b1, a2, b2, w[i])) {
-                    j = k2;
+                Line l0 = st[mid], l1 = st[mid + 1];
+                if (x_on_right(l0, l1, x[i])) {  // x[i]가 l0, l1 교점 오른쪽에 있을 때
+                    l = l1;
                     low = mid + 1;
                 } else {
                     high = mid - 1;
@@ -1747,22 +1753,20 @@ int main() {
             }
         }
 
-        dp[i] = dp[j] + (long long)w[i] * l[j+1];
+        dp[i] = l.a * x[i] + l.b;
 
-        while(st.size() >= 2) {
+        Line l2 = {y[i + 1], dp[i]};
+        while (st.size() >= 2) {
             int e = int(st.size()) - 1;
-            int k1 = st[e-1], k2 = st[e];
-            long long a1 = l[k1+1], b1 = dp[k1];
-            long long a2 = l[k2+1], b2 = dp[k2];
-            long long a3 = l[i+1], b3 = dp[i];
-            if(is_right(a1, b1, a2, b2, a3, b3)) {
+            Line l0 = st[e - 1], l1 = st[e];
+            if (l2_on_right(l0, l1, l2)) {
                 break;
             }
             st.pop_back();
         }
-        st.push_back(i);
+        st.push_back(l2);
     }
-	// 생략 ...
+    cout << dp[N];
 }
 ```
 
