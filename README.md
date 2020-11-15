@@ -1,2 +1,2 @@
 # icpc-team-note
-Repository for ICPC team notes
+2020 ICPC Seoul Regional ManManChiAnunTeam team note
